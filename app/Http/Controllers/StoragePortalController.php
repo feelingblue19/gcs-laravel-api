@@ -6,11 +6,10 @@ use Illuminate\Http\Request;
 use Google\Cloud\Storage\StorageClient;
 use Throwable;
 
-class StorageController extends Controller
+class StoragePortalController extends Controller
 {
     private $storage;
     private $bucketName;
-
 
     public function __construct()
     {
@@ -20,8 +19,7 @@ class StorageController extends Controller
             'keyFile' => json_decode($googleConfigFile, true)
         ]);
 
-        $this->bucketName = config('app.storage_bucket');
-        
+        $this->bucketName = config('app.storage_bucket_portal');
     }
 
     public function upload(Request $request)
@@ -52,7 +50,7 @@ class StorageController extends Controller
 
             $bucket = $this->storage->bucket($this->bucketName);
 
-            $object = $bucket->object($_GET['file_name']);
+            $object = $bucket->object($request->file_name);
 			// $request->file_name
             if (!$object->exists()) {
                 return response()->json([
@@ -117,4 +115,28 @@ class StorageController extends Controller
 		}
         
     }
+    public function generateUrlFile(Request $request)
+{
+    try {
+
+        $bucket = $this->storage->bucket($this->bucketName);
+        $object = $bucket->object($request->file_name);
+    
+        $url = $object->signedUrl(new \DateTime('+' . $request->expired. ' minutes'));
+
+        return response()->json([
+            'status' => 1,
+            'url' =>  $url ,
+            'data' => null
+        ], 200);
+
+    }catch (Throwable $th)  {
+        return response()->json([
+            'status' => 0,
+            'message' => $th->getMessage(),
+            'data' => null
+        ], 500);
+    }
 }
+}
+

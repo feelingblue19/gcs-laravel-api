@@ -4,6 +4,8 @@ return [
 
     'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
     'storage_bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET'),
+    'storage_bucket_portal' => env('GOOGLE_CLOUD_STORAGE_BUCKET_PORTAL'),
+    'storage_bucket_irk' => env('GOOGLE_CLOUD_STORAGE_BUCKET_IRK'),
 
     /*
     |--------------------------------------------------------------------------

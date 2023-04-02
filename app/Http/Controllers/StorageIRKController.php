@@ -6,9 +6,10 @@ use Illuminate\Http\Request;
 use Google\Cloud\Storage\StorageClient;
 use Throwable;
 
-class StorageController extends Controller
+class StorageIRKController extends Controller
 {
     private $storage;
+    private $storagenew;
     private $bucketName;
 
 
@@ -20,8 +21,7 @@ class StorageController extends Controller
             'keyFile' => json_decode($googleConfigFile, true)
         ]);
 
-        $this->bucketName = config('app.storage_bucket');
-        
+        $this->bucketName = config('app.storage_bucket_irk');
     }
 
     public function upload(Request $request)
@@ -59,7 +59,7 @@ class StorageController extends Controller
                     'status' => 0,
                     'message' => 'File not found',
                     'data' => null
-                ], 404);
+                ], 200);
             }
 
             $content = $object->downloadAsStream([
@@ -77,6 +77,61 @@ class StorageController extends Controller
             ], 200);
         } catch (Throwable $th) {
             unlink($tempFile);
+
+            return response()->json([
+                'status' => 0,
+                'message' => $th->getMessage(),
+                'data' => null
+            ], 500);
+        }
+    }
+
+    public function downloadneww(Request $request)
+    {
+        try {
+            
+            $tempStream = tmpfile();
+            $tempFile = stream_get_meta_data($tempStream)['uri'];
+
+            $bucket = $this->storage->bucket($this->bucketName);
+
+            $object = $bucket->object($request->file_name);
+			// $request->file_name
+            if (!$object->exists()) {
+                return response()->json([
+                    'status' => 0,
+                    'message' => 'File not found',
+                    'data' => null
+                ], 200);
+            }
+
+            $content = $object->downloadAsStream([
+                'restOptions' => [
+                    'sink' => $tempStream
+                ]
+            ]);
+
+            $url = 'tes';
+            
+            $url = $this->storage->signedUrl(
+                $blob,
+                time() + 15 * 60, // URL expires in 15 minutes
+                [
+                    'method' => 'GET',
+                    'contentType' => 'application/json',
+                    'responseDisposition' => 'attachment'
+                ]
+            );
+            
+            return response()->json([
+                'status' => 1,
+                'message' => 'File successfully fetched',
+                'data' => [
+                    'link' => $url
+                ]
+            ], 200);
+        } catch (Throwable $th) {
+            //unlink($tempFile);
 
             return response()->json([
                 'status' => 0,
